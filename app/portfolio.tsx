@@ -105,11 +105,12 @@ function TurningPage({turn, front, back, frontNumber, backNumber}: {turn: TurnSt
 }
 
 function WritingRoom() {
+  const [single, setSingle] = useState(() => typeof window !== 'undefined' && matchMedia('(max-width: 760px)').matches);
   const content: BookItem[] = portfolioContent.writing.length ? portfolioContent.writing.flatMap((work, index) => {
     const number = String(index + 1).padStart(2, '0');
     return [
       {type: index === 0 ? 'title' : 'chapter', overline: `MABEL / WRITING ${number}`, title: work.title, note: work.subtitle || ''},
-      ...paginateParagraphs(work.body).map((note, pageIndex) => ({type: 'text', overline: `TEXT ${number} / ${String(pageIndex + 1).padStart(2, '0')}`, title: '', note})),
+      ...paginateParagraphs(work.body, single ? 175 : 290).map((note, pageIndex) => ({type: 'text', overline: `TEXT ${number} / ${String(pageIndex + 1).padStart(2, '0')}`, title: '', note})),
     ];
   }) : emptyBook;
   const total = content.length;
@@ -117,7 +118,6 @@ function WritingRoom() {
   const [opening, setOpening] = useState(false);
   const [page, setPage] = useState(() => typeof window === 'undefined' ? 0 : Math.min(total - 1, Number(sessionStorage.getItem('mabel-writing-page') || 0)));
   const [turn, setTurn] = useState<TurnState | null>(null);
-  const [single, setSingle] = useState(() => typeof window !== 'undefined' && matchMedia('(max-width: 760px)').matches);
   const queued = useRef<1 | -1 | null>(null);
   useEffect(() => {
     const query = matchMedia('(max-width: 760px)'); const update = () => setSingle(query.matches);
@@ -142,7 +142,7 @@ function WritingRoom() {
   }, [step, total]);
   useEffect(() => {
     if (!turn) return;
-    const duration = matchMedia('(prefers-reduced-motion: reduce)').matches ? 20 : 720;
+    const duration = matchMedia('(prefers-reduced-motion: reduce)').matches ? 20 : 560;
     const timer = window.setTimeout(() => finish(true, turn), duration);
     return () => window.clearTimeout(timer);
   }, [turn, finish]);
@@ -188,7 +188,7 @@ function PhotographyRoom({open}: {open: (item: LightboxItem) => void}) {
   }, [findActive]);
   const moveTo = (index: number) => frameRefs.current[Math.max(0, Math.min(images.length - 1, index))]?.scrollIntoView({behavior: 'smooth', block: 'nearest', inline: 'center'});
   return <section className="photo-room room-body"><div className="section-intro photo-intro"><p className="kicker">PHOTO ARCHIVE / 01–05</p><h1>摄影</h1></div><div className="film-space"><div className="film-track" ref={track} tabIndex={0} aria-label="摄影作品横向胶片" onKeyDown={(event) => {if (event.key === 'ArrowRight') moveTo(active + 1); if (event.key === 'ArrowLeft') moveTo(active - 1);}}>
-    {images.map((image, index) => {const distance = Math.min(2, Math.abs(index - active)); const label = `PHOTO ${String(index + 1).padStart(2, '0')}`; return <button ref={(node) => {frameRefs.current[index] = node;}} data-distance={distance} data-side={index < active ? 'left' : index > active ? 'right' : 'center'} className="film-frame" key={image.src} onClick={() => open({src: image.src, alt: image.alt, label})}><span className="sprocket sprocket-top"/><span className="sprocket sprocket-bottom"/><span className="film-number">{label} · MABEL</span><span className="film-image"><img src={image.previewSrc || image.src} width={image.width} height={image.height} alt={image.alt} loading={index > 1 ? 'lazy' : 'eager'} decoding="async"/></span></button>;})}
+    {images.map((image, index) => {const distance = Math.min(2, Math.abs(index - active)); const label = `PHOTO ${String(index + 1).padStart(2, '0')}`; return <button ref={(node) => {frameRefs.current[index] = node;}} data-distance={distance} data-side={index < active ? 'left' : index > active ? 'right' : 'center'} className="film-frame" key={image.src} onClick={() => open({src: image.src, alt: image.alt, label})}><span className="sprocket sprocket-top"/><span className="sprocket sprocket-bottom"/><span className="film-number">{label} · MABEL</span><span className="film-image"><img src={image.previewSrc || image.src} width={image.width} height={image.height} alt={image.alt} loading="eager" fetchPriority={index === 0 ? 'high' : 'auto'} decoding="async"/></span></button>;})}
   </div></div><div className="film-controls"><button onClick={() => moveTo(active - 1)}>上一格</button><span>{String(active + 1).padStart(2, '0')} / {String(images.length).padStart(2, '0')} · 拖动胶片</span><button onClick={() => moveTo(active + 1)}>下一格</button></div></section>;
 }
 
@@ -223,20 +223,38 @@ function DesignRoom({open}: {open: (item: LightboxItem) => void}) {
 function Lightbox({item, close}: {item: LightboxItem; close: () => void}) {const showLabel = !item.label.startsWith('DESIGN'); return <div className="lightbox" role="dialog" aria-modal="true" aria-label={item.label}><button className="lightbox-close" onClick={close} aria-label="关闭大图">×</button><figure className={'lightbox-paper' + (showLabel ? '' : ' image-only')}><img src={item.src} alt={item.alt}/>{showLabel && <figcaption>{item.label}</figcaption>}</figure></div>;}
 
 function HomeScene({paused, blurred, enter, togglePause}: {paused: boolean; blurred: boolean; enter: () => void; togglePause: () => void}) {
-  return <main className={'home-scene' + (blurred ? ' is-background' : '')} aria-hidden={blurred}><div className="paper-grain" aria-hidden="true"/><img className="botanical-line" src={assets.botanical} alt=""/><span className="botanical-imprint" aria-hidden="true"/><div className="tv-stage"><button className="tv-entry" onClick={enter} aria-label="进入 Mabel 作品集"><img className="television" src={assets.television} alt="浅灰绿色复古电视，屏幕里有一只颗粒手绘小猫"/><span className="tv-screen"><img className="ascii-meadow" src={assets.meadow} alt=""/><CatAnimation paused={paused}/><span className="screen-noise"/><span className="enter-label">点击屏幕进入</span></span></button></div><h1 className="hero-title ink-title" data-text="mabel portfolio" aria-label="mabel portfolio">mabel portfolio</h1><div className="home-meta"><span>ARCHIVE / 2026</span><span>WRITING · PHOTOGRAPHY · DESIGN</span></div><button className="pause-button" onClick={togglePause} aria-pressed={paused}><span aria-hidden="true">{paused ? '▶' : 'Ⅱ'}</span>{paused ? '播放画面' : '暂停画面'}</button></main>;
+  return <main className={'home-scene' + (blurred ? ' is-background' : '')} aria-hidden={blurred}><div className="paper-grain" aria-hidden="true"/><img className="botanical-line" src={assets.botanical} alt=""/><span className="botanical-imprint" aria-hidden="true"/><div className="tv-stage"><button className="tv-entry" onClick={enter} aria-label="进入 Mabel 作品集"><img className="television" src={assets.television} alt="浅灰绿色复古电视，屏幕里有一只颗粒手绘小猫" fetchPriority="high"/><span className="tv-screen"><img className="ascii-meadow" src={assets.meadow} alt=""/><CatAnimation paused={paused}/><span className="screen-noise"/><span className="enter-label">点击屏幕进入</span></span></button></div><h1 className="hero-title ink-title" data-text="mabel portfolio" aria-label="mabel portfolio">mabel portfolio</h1><div className="home-meta"><span>ARCHIVE / 2026</span><span>WRITING · PHOTOGRAPHY · DESIGN</span></div><button className="pause-button" onClick={togglePause} aria-pressed={paused}><span aria-hidden="true">{paused ? '▶' : 'Ⅱ'}</span>{paused ? '播放画面' : '暂停画面'}</button></main>;
 }
 
 function IndexOverlay({go, close}: {go: (view: View) => void; close: () => void}) {return <main className="index-overlay"><header className="scene-header"><div><span>mabel portfolio</span><small>SELECTED WORKS / 2026</small></div><button className="close-button" onClick={close} aria-label="返回电视首页"><span>×</span> 返回首页</button></header><section className="index-content" aria-label="作品目录"><p className="index-label">MABEL PORTFOLIO · CONTENTS</p><div className="paper-menu">{rooms.map((room, index) => <button key={room.id} className={'paper-card paper-card-' + (index + 1)} onClick={() => go(room.id)}><span className="paper-no">{room.no}</span><strong>{room.zh}</strong><em>{room.en}</em></button>)}</div></section></main>;}
 
 export default function Portfolio() {
   const [view, setView] = useState<View>('home'); const [paused, setPaused] = useState(false); const [lightbox, setLightbox] = useState<LightboxItem | null>(null);
+  const closeRoom = useCallback(() => {
+    const ensureIndex = (event: PopStateEvent) => {
+      const state = event.state as HistoryState | null;
+      if (state?.view === 'index') return;
+      history.pushState({view: 'index'} satisfies HistoryState, '');
+      setView('index'); setLightbox(null);
+    };
+    addEventListener('popstate', ensureIndex, {once: true});
+    history.back();
+  }, []);
   useEffect(() => {history.replaceState({view: 'home'} satisfies HistoryState, ''); const onPop = (event: PopStateEvent) => {const state = event.state as HistoryState | null; setView(state?.view || 'home'); setLightbox(state?.lightbox || null);}; addEventListener('popstate', onPop); return () => removeEventListener('popstate', onPop);}, []);
-  useEffect(() => {const onKey = (event: KeyboardEvent) => {if (event.key === 'Escape' && (lightbox || view !== 'home')) history.back();}; addEventListener('keydown', onKey); return () => removeEventListener('keydown', onKey);}, [view, lightbox]);
+  useEffect(() => {const onKey = (event: KeyboardEvent) => {if (event.key !== 'Escape') return; if (lightbox || view === 'index') history.back(); else if (view !== 'home') closeRoom();}; addEventListener('keydown', onKey); return () => removeEventListener('keydown', onKey);}, [view, lightbox, closeRoom]);
+  useEffect(() => {
+    if (view !== 'index') return;
+    const sources = portfolioContent.photography[0]?.images.map((image) => image.previewSrc || image.src) || [];
+    const preload = () => sources.forEach((src) => {const image = new Image(); image.decoding = 'async'; image.src = src;});
+    const idleWindow = window as Window & {requestIdleCallback?: (callback: () => void, options?: {timeout: number}) => number; cancelIdleCallback?: (id: number) => void};
+    if (idleWindow.requestIdleCallback) {const id = idleWindow.requestIdleCallback(preload, {timeout: 600}); return () => idleWindow.cancelIdleCallback?.(id);}
+    const timer = window.setTimeout(preload, 80); return () => window.clearTimeout(timer);
+  }, [view]);
   const go = (next: View) => {history.pushState({view: next} satisfies HistoryState, ''); setView(next); setLightbox(null);};
   const open = (item: LightboxItem) => {history.pushState({view, lightbox: item} satisfies HistoryState, ''); setLightbox(item);};
   let room: ReactNode = null;
-  if (view === 'writing') room = <main className="room-scene writing-scene"><SceneHeader room="WRITING" onClose={() => history.back()}/><WritingRoom/></main>;
-  if (view === 'photography') room = <main className="room-scene photo-scene"><SceneHeader room="PHOTOGRAPHY" onClose={() => history.back()}/><PhotographyRoom open={open}/></main>;
-  if (view === 'design') room = <main className="room-scene design-scene"><SceneHeader room="DESIGN" onClose={() => history.back()}/><DesignRoom open={open}/></main>;
+  if (view === 'writing') room = <main className="room-scene writing-scene"><SceneHeader room="WRITING" onClose={closeRoom}/><WritingRoom/></main>;
+  if (view === 'photography') room = <main className="room-scene photo-scene"><SceneHeader room="PHOTOGRAPHY" onClose={closeRoom}/><PhotographyRoom open={open}/></main>;
+  if (view === 'design') room = <main className="room-scene design-scene"><SceneHeader room="DESIGN" onClose={closeRoom}/><DesignRoom open={open}/></main>;
   return <>{(view === 'home' || view === 'index') && <HomeScene paused={paused || view === 'index'} blurred={view === 'index'} enter={() => go('index')} togglePause={() => setPaused((value) => !value)}/>} {view === 'index' && <IndexOverlay go={go} close={() => history.back()}/>} {room}{lightbox && <Lightbox item={lightbox} close={() => history.back()}/>}</>;
 }
