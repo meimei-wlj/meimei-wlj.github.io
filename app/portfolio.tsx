@@ -197,10 +197,23 @@ function DesignRoom({open}: {open: (item: LightboxItem) => void}) {
   useEffect(() => {
     const node = scroll.current; if (!node) return;
     node.scrollTop = Number(sessionStorage.getItem('mabel-design-scroll') || 0);
-    let storageTimer = 0;
-    const update = () => {if (botanical.current && !matchMedia('(prefers-reduced-motion: reduce)').matches && innerWidth > 760) botanical.current.style.transform = `translate3d(0, ${node.scrollTop * .18}px, 0)`;};
-    const onScroll = () => {cancelAnimationFrame(raf.current); raf.current = requestAnimationFrame(update); window.clearTimeout(storageTimer); storageTimer = window.setTimeout(() => sessionStorage.setItem('mabel-design-scroll', String(node.scrollTop)), 180);};
-    update(); node.addEventListener('scroll', onScroll, {passive: true}); return () => {node.removeEventListener('scroll', onScroll); cancelAnimationFrame(raf.current); window.clearTimeout(storageTimer);};
+    const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
+    let storageTimer = 0; let settleTimer = 0;
+    const update = () => {
+      const layer = botanical.current; if (!layer) return;
+      if (reducedMotion.matches) {layer.style.transform = ''; return;}
+      const travel = Math.min(node.scrollTop * .1, innerHeight * .52);
+      layer.style.transform = `translate3d(0, ${-travel}px, 0)`;
+    };
+    const onScroll = () => {
+      const layer = botanical.current;
+      if (layer) layer.style.willChange = 'transform';
+      cancelAnimationFrame(raf.current); raf.current = requestAnimationFrame(update);
+      window.clearTimeout(storageTimer); window.clearTimeout(settleTimer);
+      storageTimer = window.setTimeout(() => sessionStorage.setItem('mabel-design-scroll', String(node.scrollTop)), 180);
+      settleTimer = window.setTimeout(() => {if (botanical.current) botanical.current.style.willChange = 'auto';}, 150);
+    };
+    update(); node.addEventListener('scroll', onScroll, {passive: true}); return () => {node.removeEventListener('scroll', onScroll); cancelAnimationFrame(raf.current); window.clearTimeout(storageTimer); window.clearTimeout(settleTimer);};
   }, []);
   return <div className="design-scroll" ref={scroll}><section className="design-room room-body"><div className="botanical-layer" ref={botanical} aria-hidden="true"/><div className="work-layer"><header className="section-intro design-title"><p className="kicker">DESIGN ARCHIVE / 01–05</p><h1>设计</h1></header>
     {portfolioContent.design.map((project, index) => {const asset = project.assets[0]; return <article className={'design-project design-project-' + (index + 1)} key={project.slug}><button className="design-art" onClick={() => open({src: asset.src, alt: asset.alt, label: project.title})}><img src={asset.previewSrc || asset.src} alt={asset.alt} width={asset.width} height={asset.height} loading={index > 0 ? 'lazy' : 'eager'} decoding="async"/></button></article>;})}

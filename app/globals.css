@@ -87,7 +87,7 @@ img{display:block;max-width:100%}
   .room-scene{padding:1.2rem 1rem 0}.room-header{height:3.5rem}.room-body{height:calc(100svh - 4.7rem)}
   .book{width:91vw;height:68vh;display:block}.book:before{display:none}.base-page{display:none;width:100%;height:100%;border-radius:6px!important;padding:2.1rem}.base-page:first-of-type{display:flex}.book-page h1,.sheet-face h1{font-size:2.45rem}.book-vine{width:75%;right:-22%;top:-10%}.turning-sheet{left:0!important;width:100%;height:100%}.flip-next{transform-origin:left center}.flip-previous{transform-origin:right center}.sheet-face{padding:2.1rem;border-radius:6px}.book-controls{gap:1.1rem}
   .photo-intro{margin:0 0 .7rem}.photo-intro h1{font-size:2.25rem}.photo-intro>p:last-child{font-size:.82rem}.film-space{margin:0 -1rem;padding:.5rem 0}.film-track{padding:2.1rem 9vw 2.5rem;gap:.7rem}.film-frame{flex-basis:82vw;padding:1.8rem .8rem}.film-frame[data-side="left"]{transform:translateY(1rem) rotateY(8deg) scale(.93)}.film-frame[data-side="right"]{transform:translateY(1rem) rotateY(-8deg) scale(.93)}.film-frame[data-side="center"]{transform:translateY(-.55rem) scale(1)}.film-controls{gap:.8rem;font-size:.65rem}
-  .design-scroll{inset:4.7rem 0 0}.design-room{padding:7vh 1.2rem}.botanical-layer{transform:none!important;height:180vh;will-change:auto}.design-title{width:100%;margin-bottom:11vh}.design-title h1{font-size:3.05rem}.design-project,.design-project-2{width:100%;grid-template-columns:1fr;gap:1.4rem;margin-bottom:12vh}.design-project-2 .design-placeholder{order:0}.design-project h2{font-size:2.25rem}.design-vine-a{width:67vw;left:-35%;opacity:.42}.design-vine-b{width:100vw;right:-45%}.design-vine-c{width:62vw;right:-29%}.lightbox{padding:1rem}.lightbox-close{right:1rem;top:1rem}.lightbox-paper{width:92vw;height:68vh;padding:2rem}.lightbox-paper strong{font-size:2.25rem}
+  .design-scroll{inset:4.7rem 0 0}.design-room{padding:7vh 1.2rem}.botanical-layer{height:180vh;will-change:auto}.design-title{width:100%;margin-bottom:11vh}.design-title h1{font-size:3.05rem}.design-project,.design-project-2{width:100%;grid-template-columns:1fr;gap:1.4rem;margin-bottom:12vh}.design-project-2 .design-placeholder{order:0}.design-project h2{font-size:2.25rem}.design-vine-a{width:67vw;left:-35%;opacity:.42}.design-vine-b{width:100vw;right:-45%}.design-vine-c{width:62vw;right:-29%}.lightbox{padding:1rem}.lightbox-close{right:1rem;top:1rem}.lightbox-paper{width:92vw;height:68vh;padding:2rem}.lightbox-paper strong{font-size:2.25rem}
 }
 
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important}.home-scene,.paper-card,.film-frame,.design-placeholder{transition-duration:.001ms!important}.cat-frame{display:none}.cat-frame-0{display:block;opacity:1}.botanical-layer{transform:none!important;will-change:auto}.turning-sheet{opacity:.28}.ascii-meadow{transform:none}}
@@ -288,3 +288,104 @@ body{font-family:"Source Han Serif SC","Songti SC",serif}
 .design-project,.design-project-2,.design-project-3,.design-project-4,.design-project-5{display:block;width:min(860px,78vw);background:transparent;background-image:none;padding:0;box-shadow:none;transform:none;margin:0 auto 15vh}.design-project:nth-of-type(even){margin-left:auto;margin-right:2vw}.design-project:nth-of-type(odd){margin-left:2vw;margin-right:auto}.design-art{display:block;width:100%;padding:0;background:none;background-image:none;box-shadow:none;clip-path:none}.design-art img{display:block;width:100%;max-height:82vh;object-fit:contain}.design-caption,.design-end{display:none}.lightbox-paper.image-only{display:block}.lightbox-paper.image-only img{height:100%}
 .design-scene .botanical-layer{display:none}.design-room{background:transparent}
 @media(max-width:760px){.book-page p,.sheet-face p{font-size:.84rem;line-height:1.72}.design-project,.design-project-2,.design-project-3,.design-project-4,.design-project-5,.design-project:nth-of-type(even),.design-project:nth-of-type(odd){width:100%;margin:0 0 11vh}}
+
+/* Seventh edition — lightweight mobile index and restored botanical parallax */
+.design-scroll{
+  z-index:1;
+  bottom:0;
+  min-height:0;
+  overflow-x:hidden;
+  overflow-y:auto;
+  overscroll-behavior-y:contain;
+  touch-action:pan-y;
+  -webkit-overflow-scrolling:touch;
+}
+.design-room{
+  overflow:visible;
+  min-height:100%;
+  height:auto;
+  isolation:isolate;
+}
+.design-scene .botanical-layer{
+  display:block;
+  position:sticky;
+  z-index:0;
+  top:-20svh;
+  inset-inline:0;
+  width:100%;
+  height:145svh;
+  margin-bottom:-145svh;
+  pointer-events:none;
+  background-image:url('/assets/design-botanical-print-v4.webp');
+  background-position:center center;
+  background-repeat:no-repeat;
+  background-size:auto 128svh;
+  opacity:.34;
+  filter:contrast(.96) saturate(.74);
+  mix-blend-mode:multiply;
+  transform:translate3d(0,0,0);
+}
+.design-room:before{
+  position:fixed;
+  background:linear-gradient(90deg,#f4f0e6e0 0 8%,transparent 24% 76%,#f4f0e6c9 92% 100%);
+}
+.work-layer{position:relative;z-index:2}
+.design-art{touch-action:pan-y}
+
+@media(max-width:760px){
+  .index-overlay{overflow:hidden;padding:1rem;perspective:none;animation-duration:220ms}
+  .index-overlay:before{opacity:.08}
+  .index-content{display:flex;min-height:0;height:calc(100svh - 4.3rem);margin:3.3rem auto 0;flex-direction:column;justify-content:center}
+  .index-label{flex:0 0 auto;margin:0 0 .75rem}
+  .paper-menu{position:relative;display:flex;min-height:0;height:min(70svh,620px);flex:1 1 auto;flex-direction:column;align-items:center;justify-content:center;gap:.7rem;perspective:none;transform-style:flat}
+  .paper-card{
+    position:relative;
+    inset:auto;
+    left:auto;
+    width:min(78vw,330px);
+    height:auto;
+    min-height:0;
+    flex:1 1 0;
+    max-height:28%;
+    aspect-ratio:auto;
+    padding:.85rem 1rem;
+    clip-path:none;
+    filter:none;
+    box-shadow:0 .65rem 1.25rem #101b1842,2px 3px 0 #d9d3c5;
+    transform-style:flat;
+    animation:mobileNoteIn 260ms var(--enter) both;
+    transition:transform 130ms var(--enter),box-shadow 130ms ease;
+    contain:layout paint;
+  }
+  .paper-card:before{opacity:.1;background-size:9px 9px}
+  .paper-card:after{filter:none}
+  .paper-card-1{transform:rotate(-1.8deg);animation-delay:0ms}
+  .paper-card-2{transform:translateX(3.5vw) rotate(1.2deg);animation-delay:35ms}
+  .paper-card-3{transform:translateX(-2vw) rotate(-.7deg);animation-delay:70ms}
+  .paper-card-1:hover{transform:rotate(-1.8deg)}
+  .paper-card-2:hover{transform:translateX(3.5vw) rotate(1.2deg)}
+  .paper-card-3:hover{transform:translateX(-2vw) rotate(-.7deg)}
+  .paper-card:active{transform:scale(.985)}
+  .paper-card strong{font-size:clamp(2rem,9.5vw,2.8rem)}
+  .paper-card em{margin-top:.15rem}
+
+  .design-scroll{inset:4.7rem 0 0}
+  .design-room{padding:5vh 1rem 12vh}
+  .design-scene .botanical-layer{
+    top:-16svh;
+    height:136svh;
+    margin-bottom:-136svh;
+    background-position:46% center;
+    background-size:auto 116svh;
+    opacity:.29;
+  }
+  .design-room:before{background:linear-gradient(90deg,#f4f0e6d9 0 3%,transparent 20% 80%,#f4f0e6c7 97% 100%)}
+  .design-art{user-select:none;-webkit-user-select:none}
+}
+
+@keyframes mobileNoteIn{from{opacity:0;transform:translate3d(0,1.1rem,0) scale(.97)}to{opacity:1}}
+
+@media(prefers-reduced-motion:reduce){
+  .design-scene .botanical-layer{transform:none!important;will-change:auto!important}
+  .paper-card{animation:none!important}
+}
