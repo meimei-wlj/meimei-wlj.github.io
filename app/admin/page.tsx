@@ -1,2 +1,0 @@
-import {requireChatGPTUser} from "../chatgpt-auth";import {isAdmin} from "../../lib/store";import Admin from "./editor";
-export const dynamic="force-dynamic";export default async function Page(){await requireChatGPTUser("/admin");if(!await isAdmin())return <main className="restricted"><h1>此处只对创作者开放。</h1><p>请使用网站管理员的 ChatGPT 账号登录。</p><a href="/signout-with-chatgpt?return_to=/admin" target="_top">退出并切换账号</a><a href="/">返回作品集</a></main>;return <Admin/>;}
