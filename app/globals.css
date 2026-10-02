@@ -421,3 +421,30 @@ body{font-family:"Source Han Serif SC","Songti SC",serif}
   .film-image{background:#1d2421}
   .film-image img{transform:translateZ(0)}
 }
+
+/* Ninth edition — stable first paint and cross-browser fallbacks */
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%;color-scheme:light}
+.home-scene,.room-scene{height:100vh;height:100svh}
+.index-overlay{min-height:100vh;min-height:100svh}
+.room-body{height:calc(100vh - 5rem);height:calc(100svh - 5rem)}
+.design-room{min-height:calc(100vh - 5rem);min-height:calc(100svh - 5rem)}
+.turning-sheet,.book{-webkit-transform-style:preserve-3d;transform-style:preserve-3d}
+.sheet-face{-webkit-backface-visibility:hidden;backface-visibility:hidden}
+.lightbox{-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
+  .lightbox{background:#172a25fa}
+}
+@supports not (mix-blend-mode:multiply){
+  .botanical-line,.design-scene .botanical-layer{mix-blend-mode:normal;opacity:.24}
+}
+@supports not (clip-path:polygon(0 0,100% 0,100% 100%,0 100%)){
+  .paper-card,.film-frame,.design-art{clip-path:none;border-radius:2px}
+}
+
+@media(max-width:760px){
+  .index-content{height:calc(100vh - 4.3rem);height:calc(100svh - 4.3rem)}
+  .room-body{height:calc(100vh - 4.7rem);height:calc(100svh - 4.7rem)}
+  .design-room{min-height:calc(100vh - 4.7rem);min-height:calc(100svh - 4.7rem)}
+  .book{height:calc(100vh - 11.5rem);height:calc(100svh - 11.5rem)}
+}

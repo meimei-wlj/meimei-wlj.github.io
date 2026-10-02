@@ -1,4 +1,5 @@
 'use client';
+/* eslint-disable @next/next/no-img-element -- GitHub Pages serves pre-generated, size-specific WebP assets without a Next image server. */
 
 import {type ReactNode, useCallback, useEffect, useRef, useState} from 'react';
 import {portfolioContent} from '../lib/content';
@@ -69,7 +70,7 @@ function CatAnimation({paused}: {paused: boolean}) {
     document.addEventListener('visibilitychange', visibility);
     return () => {stopped = true; window.clearTimeout(timer); cancelAnimationFrame(raf); document.removeEventListener('visibilitychange', visibility);};
   }, [paused]);
-  return <span className={'cat-layer' + (ready ? ' is-ready' : '')}><img className="cat-fallback" src={assets.catPoster} alt=""/><canvas ref={canvas} className="cat-canvas" width="600" height="400" role="img" aria-label="黑白颗粒手绘小猫"/></span>;
+  return <span className={'cat-layer' + (ready ? ' is-ready' : '')}><img className="cat-fallback" src={assets.catPoster} alt="" width="300" height="200"/><canvas ref={canvas} className="cat-canvas" width="600" height="400" role="img" aria-label="黑白颗粒手绘小猫"/></span>;
 }
 
 function SceneHeader({room, onClose}: {room: string; onClose: () => void}) {
@@ -177,7 +178,7 @@ function PhotographyRoom({open}: {open: (item: LightboxItem) => void}) {
     const node = track.current; if (!node) return;
     const middle = node.scrollLeft + node.clientWidth / 2; let nearest = 0; let distance = Infinity;
     frameRefs.current.forEach((frame, index) => {if (!frame) return; const center = frame.offsetLeft + frame.offsetWidth / 2; if (Math.abs(center - middle) < distance) {distance = Math.abs(center - middle); nearest = index;}});
-    setActive(nearest);
+    setActive((current) => current === nearest ? current : nearest);
   }, []);
   useEffect(() => {
     const node = track.current; if (!node) return;
@@ -186,7 +187,7 @@ function PhotographyRoom({open}: {open: (item: LightboxItem) => void}) {
     const onScroll = () => {cancelAnimationFrame(raf.current); raf.current = requestAnimationFrame(findActive); window.clearTimeout(storageTimer); storageTimer = window.setTimeout(() => sessionStorage.setItem('mabel-photo-scroll', String(node.scrollLeft)), 160);};
     node.addEventListener('scroll', onScroll, {passive: true}); return () => {node.removeEventListener('scroll', onScroll); cancelAnimationFrame(raf.current); window.clearTimeout(storageTimer);};
   }, [findActive]);
-  const moveTo = (index: number) => frameRefs.current[Math.max(0, Math.min(images.length - 1, index))]?.scrollIntoView({behavior: 'smooth', block: 'nearest', inline: 'center'});
+  const moveTo = (index: number) => frameRefs.current[Math.max(0, Math.min(images.length - 1, index))]?.scrollIntoView({behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'nearest', inline: 'center'});
   return <section className="photo-room room-body"><div className="section-intro photo-intro"><p className="kicker">PHOTO ARCHIVE / 01–05</p><h1>摄影</h1></div><div className="film-space"><div className="film-track" ref={track} tabIndex={0} aria-label="摄影作品横向胶片" onKeyDown={(event) => {if (event.key === 'ArrowRight') moveTo(active + 1); if (event.key === 'ArrowLeft') moveTo(active - 1);}}>
     {images.map((image, index) => {const distance = Math.min(2, Math.abs(index - active)); const label = `PHOTO ${String(index + 1).padStart(2, '0')}`; return <button ref={(node) => {frameRefs.current[index] = node;}} data-distance={distance} data-side={index < active ? 'left' : index > active ? 'right' : 'center'} className="film-frame" key={image.src} onClick={() => open({src: image.src, alt: image.alt, label})}><span className="sprocket sprocket-top"/><span className="sprocket sprocket-bottom"/><span className="film-number">{label} · MABEL</span><span className="film-image"><img src={image.previewSrc || image.src} width={image.width} height={image.height} alt={image.alt} loading="eager" fetchPriority={index === 0 ? 'high' : 'auto'} decoding="async"/></span></button>;})}
   </div></div><div className="film-controls"><button onClick={() => moveTo(active - 1)}>上一格</button><span>{String(active + 1).padStart(2, '0')} / {String(images.length).padStart(2, '0')} · 拖动胶片</span><button onClick={() => moveTo(active + 1)}>下一格</button></div></section>;
@@ -195,35 +196,35 @@ function PhotographyRoom({open}: {open: (item: LightboxItem) => void}) {
 function DesignRoom({open}: {open: (item: LightboxItem) => void}) {
   const scroll = useRef<HTMLDivElement>(null); const botanical = useRef<HTMLDivElement>(null); const raf = useRef(0);
   useEffect(() => {
-    const node = scroll.current; if (!node) return;
+    const node = scroll.current; const layer = botanical.current; if (!node || !layer) return;
     node.scrollTop = Number(sessionStorage.getItem('mabel-design-scroll') || 0);
     const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
     let storageTimer = 0; let settleTimer = 0;
     const update = () => {
-      const layer = botanical.current; if (!layer) return;
       if (reducedMotion.matches) {layer.style.transform = ''; return;}
-      const travel = Math.min(node.scrollTop * .1, innerHeight * .52);
+      const travel = Math.min(node.scrollTop * .1, node.clientHeight * .52);
       layer.style.transform = `translate3d(0, ${-travel}px, 0)`;
     };
     const onScroll = () => {
-      const layer = botanical.current;
-      if (layer) layer.style.willChange = 'transform';
+      layer.style.willChange = 'transform';
       cancelAnimationFrame(raf.current); raf.current = requestAnimationFrame(update);
       window.clearTimeout(storageTimer); window.clearTimeout(settleTimer);
       storageTimer = window.setTimeout(() => sessionStorage.setItem('mabel-design-scroll', String(node.scrollTop)), 180);
-      settleTimer = window.setTimeout(() => {if (botanical.current) botanical.current.style.willChange = 'auto';}, 150);
+      settleTimer = window.setTimeout(() => layer.style.removeProperty('will-change'), 150);
     };
-    update(); node.addEventListener('scroll', onScroll, {passive: true}); return () => {node.removeEventListener('scroll', onScroll); cancelAnimationFrame(raf.current); window.clearTimeout(storageTimer); window.clearTimeout(settleTimer);};
+    const onMotionChange = () => {cancelAnimationFrame(raf.current); raf.current = requestAnimationFrame(update);};
+    update(); node.addEventListener('scroll', onScroll, {passive: true}); reducedMotion.addEventListener('change', onMotionChange);
+    return () => {node.removeEventListener('scroll', onScroll); reducedMotion.removeEventListener('change', onMotionChange); cancelAnimationFrame(raf.current); window.clearTimeout(storageTimer); window.clearTimeout(settleTimer); layer.style.removeProperty('will-change');};
   }, []);
   return <div className="design-scroll" ref={scroll}><section className="design-room room-body"><div className="botanical-layer" ref={botanical} aria-hidden="true"/><div className="work-layer"><header className="section-intro design-title"><p className="kicker">DESIGN ARCHIVE / 01–05</p><h1>设计</h1></header>
     {portfolioContent.design.map((project, index) => {const asset = project.assets[0]; return <article className={'design-project design-project-' + (index + 1)} key={project.slug}><button className="design-art" onClick={() => open({src: asset.src, alt: asset.alt, label: project.title})}><img src={asset.previewSrc || asset.src} alt={asset.alt} width={asset.width} height={asset.height} loading={index > 0 ? 'lazy' : 'eager'} decoding="async"/></button></article>;})}
     </div></section></div>;
 }
 
-function Lightbox({item, close}: {item: LightboxItem; close: () => void}) {const showLabel = !item.label.startsWith('DESIGN'); return <div className="lightbox" role="dialog" aria-modal="true" aria-label={item.label}><button className="lightbox-close" onClick={close} aria-label="关闭大图">×</button><figure className={'lightbox-paper' + (showLabel ? '' : ' image-only')}><img src={item.src} alt={item.alt}/>{showLabel && <figcaption>{item.label}</figcaption>}</figure></div>;}
+function Lightbox({item, close}: {item: LightboxItem; close: () => void}) {const showLabel = !item.label.startsWith('DESIGN'); return <div className="lightbox" role="dialog" aria-modal="true" aria-label={item.label}><button className="lightbox-close" onClick={close} aria-label="关闭大图">×</button><figure className={'lightbox-paper' + (showLabel ? '' : ' image-only')}><img src={item.src} alt={item.alt} decoding="async"/>{showLabel && <figcaption>{item.label}</figcaption>}</figure></div>;}
 
 function HomeScene({paused, blurred, enter, togglePause}: {paused: boolean; blurred: boolean; enter: () => void; togglePause: () => void}) {
-  return <main className={'home-scene' + (blurred ? ' is-background' : '')} aria-hidden={blurred}><div className="paper-grain" aria-hidden="true"/><img className="botanical-line" src={assets.botanical} alt=""/><span className="botanical-imprint" aria-hidden="true"/><div className="tv-stage"><button className="tv-entry" onClick={enter} aria-label="进入 Mabel 作品集"><img className="television" src={assets.television} alt="浅灰绿色复古电视，屏幕里有一只颗粒手绘小猫" fetchPriority="high"/><span className="tv-screen"><img className="ascii-meadow" src={assets.meadow} alt=""/><CatAnimation paused={paused}/><span className="screen-noise"/><span className="enter-label">点击屏幕进入</span></span></button></div><h1 className="hero-title ink-title" data-text="mabel portfolio" aria-label="mabel portfolio">mabel portfolio</h1><div className="home-meta"><span>ARCHIVE / 2026</span><span>WRITING · PHOTOGRAPHY · DESIGN</span></div><button className="pause-button" onClick={togglePause} aria-pressed={paused}><span aria-hidden="true">{paused ? '▶' : 'Ⅱ'}</span>{paused ? '播放画面' : '暂停画面'}</button></main>;
+  return <main className={'home-scene' + (blurred ? ' is-background' : '')} aria-hidden={blurred}><div className="paper-grain" aria-hidden="true"/><img className="botanical-line" src={assets.botanical} alt="" width="1947" height="808" decoding="async" fetchPriority="low"/><span className="botanical-imprint" aria-hidden="true"/><div className="tv-stage"><button className="tv-entry" onClick={enter} aria-label="进入 Mabel 作品集"><img className="television" src={assets.television} alt="浅灰绿色复古电视，屏幕里有一只颗粒手绘小猫" width="1536" height="1024" fetchPriority="high"/><span className="tv-screen"><img className="ascii-meadow" src={assets.meadow} alt="" width="1536" height="1024" decoding="async"/><CatAnimation paused={paused}/><span className="screen-noise"/><span className="enter-label">点击屏幕进入</span></span></button></div><h1 className="hero-title ink-title" data-text="mabel portfolio" aria-label="mabel portfolio">mabel portfolio</h1><div className="home-meta"><span>ARCHIVE / 2026</span><span>WRITING · PHOTOGRAPHY · DESIGN</span></div><button className="pause-button" onClick={togglePause} aria-pressed={paused}><span aria-hidden="true">{paused ? '▶' : 'Ⅱ'}</span>{paused ? '播放画面' : '暂停画面'}</button></main>;
 }
 
 function IndexOverlay({go, close}: {go: (view: View) => void; close: () => void}) {return <main className="index-overlay"><header className="scene-header"><div><span>mabel portfolio</span><small>SELECTED WORKS / 2026</small></div><button className="close-button" onClick={close} aria-label="返回电视首页"><span>×</span> 返回首页</button></header><section className="index-content" aria-label="作品目录"><p className="index-label">MABEL PORTFOLIO · CONTENTS</p><div className="paper-menu">{rooms.map((room, index) => <button key={room.id} className={'paper-card paper-card-' + (index + 1)} onClick={() => go(room.id)}><span className="paper-no">{room.no}</span><strong>{room.zh}</strong><em>{room.en}</em></button>)}</div></section></main>;}
@@ -245,7 +246,7 @@ export default function Portfolio() {
   useEffect(() => {
     if (view !== 'index') return;
     const sources = portfolioContent.photography[0]?.images.map((image) => image.previewSrc || image.src) || [];
-    const preload = () => sources.forEach((src) => {const image = new Image(); image.decoding = 'async'; image.src = src;});
+    const preload = () => sources.forEach((src) => {const image = new Image(); image.decoding = 'async'; image.src = src; void image.decode().catch(() => undefined);});
     const idleWindow = window as Window & {requestIdleCallback?: (callback: () => void, options?: {timeout: number}) => number; cancelIdleCallback?: (id: number) => void};
     if (idleWindow.requestIdleCallback) {const id = idleWindow.requestIdleCallback(preload, {timeout: 600}); return () => idleWindow.cancelIdleCallback?.(id);}
     const timer = window.setTimeout(preload, 80); return () => window.clearTimeout(timer);
