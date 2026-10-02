@@ -232,7 +232,7 @@ function IndexOverlay({go, close}: {go: (view: View) => void; close: () => void}
 export default function Portfolio() {
   const [view, setView] = useState<View>('home'); const [paused, setPaused] = useState(false); const [lightbox, setLightbox] = useState<LightboxItem | null>(null);
   const viewRef = useRef<View>('home');
-  const closeRoom = useCallback(() => history.back(), []);
+  const closeRoom = useCallback(() => {setView('index'); setLightbox(null); history.back();}, []);
   useEffect(() => {history.replaceState({view: 'home'} satisfies HistoryState, ''); const onPop = (event: PopStateEvent) => {const state = event.state as HistoryState | null; const next = state?.view || 'home'; const current = viewRef.current; if ((current === 'writing' || current === 'photography' || current === 'design') && next === 'home') {history.pushState({view: 'index'} satisfies HistoryState, ''); viewRef.current = 'index'; setView('index'); setLightbox(null); return;} viewRef.current = next; setView(next); setLightbox(state?.lightbox || null);}; addEventListener('popstate', onPop); return () => removeEventListener('popstate', onPop);}, []);
   useEffect(() => {const onKey = (event: KeyboardEvent) => {if (event.key !== 'Escape') return; if (lightbox || view === 'index') history.back(); else if (view !== 'home') closeRoom();}; addEventListener('keydown', onKey); return () => removeEventListener('keydown', onKey);}, [view, lightbox, closeRoom]);
   useEffect(() => {
