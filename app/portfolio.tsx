@@ -6,9 +6,6 @@ import {portfolioContent} from '../lib/content';
 
 type View = 'home' | 'index' | 'writing' | 'photography' | 'design';
 type LightboxItem = {src: string; alt: string; label: string};
-type HistoryState = {view: View; lightbox?: LightboxItem};
-const pushHistoryState = (state: HistoryState) => History.prototype.pushState.call(history, state, '');
-const replaceHistoryState = (state: HistoryState) => History.prototype.replaceState.call(history, state, '');
 type BookItem = {type: string; overline: string; title: string; note: string};
 type TurnState = {direction: 1 | -1; target: number; dragging: boolean};
 
@@ -233,9 +230,8 @@ function IndexOverlay({go, close}: {go: (view: View) => void; close: () => void}
 
 export default function Portfolio() {
   const [view, setView] = useState<View>('home'); const [paused, setPaused] = useState(false); const [lightbox, setLightbox] = useState<LightboxItem | null>(null);
-  const viewRef = useRef<View>('home');
   const closeRoom = useCallback(() => {setView('index'); setLightbox(null); history.back();}, []);
-  useEffect(() => {replaceHistoryState({view: 'home'}); const onPop = (event: PopStateEvent) => {const state = event.state as HistoryState | null; const next = state?.view || 'home'; const current = viewRef.current; if ((current === 'writing' || current === 'photography' || current === 'design') && next === 'home') {pushHistoryState({view: 'index'}); viewRef.current = 'index'; setView('index'); setLightbox(null); return;} viewRef.current = next; setView(next); setLightbox(state?.lightbox || null);}; addEventListener('popstate', onPop); return () => removeEventListener('popstate', onPop);}, []);
+  useEffect(() => {const syncHash = () => {const token = location.hash.slice(1); const next = token.split('-')[0] as View; setView(['index', 'writing', 'photography', 'design'].includes(next) ? next : 'home'); if (!token.endsWith('-preview')) setLightbox(null);}; syncHash(); addEventListener('hashchange', syncHash); return () => removeEventListener('hashchange', syncHash);}, []);
   useEffect(() => {const onKey = (event: KeyboardEvent) => {if (event.key !== 'Escape') return; if (lightbox || view === 'index') history.back(); else if (view !== 'home') closeRoom();}; addEventListener('keydown', onKey); return () => removeEventListener('keydown', onKey);}, [view, lightbox, closeRoom]);
   useEffect(() => {
     if (view !== 'index') return;
@@ -245,8 +241,8 @@ export default function Portfolio() {
     if (idleWindow.requestIdleCallback) {const id = idleWindow.requestIdleCallback(preload, {timeout: 600}); return () => idleWindow.cancelIdleCallback?.(id);}
     const timer = window.setTimeout(preload, 80); return () => window.clearTimeout(timer);
   }, [view]);
-  const go = (next: View) => {pushHistoryState({view: next}); viewRef.current = next; setView(next); setLightbox(null);};
-  const open = (item: LightboxItem) => {pushHistoryState({view, lightbox: item}); setLightbox(item);};
+  const go = (next: View) => {location.hash = next; setView(next); setLightbox(null);};
+  const open = (item: LightboxItem) => {location.hash = `${view}-preview`; setLightbox(item);};
   let room: ReactNode = null;
   if (view === 'writing') room = <main className="room-scene writing-scene"><SceneHeader room="WRITING" onClose={closeRoom}/><WritingRoom/></main>;
   if (view === 'photography') room = <main className="room-scene photo-scene"><SceneHeader room="PHOTOGRAPHY" onClose={closeRoom}/><PhotographyRoom open={open}/></main>;
