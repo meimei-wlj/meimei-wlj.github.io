@@ -231,17 +231,9 @@ function IndexOverlay({go, close}: {go: (view: View) => void; close: () => void}
 
 export default function Portfolio() {
   const [view, setView] = useState<View>('home'); const [paused, setPaused] = useState(false); const [lightbox, setLightbox] = useState<LightboxItem | null>(null);
-  const closeRoom = useCallback(() => {
-    const ensureIndex = (event: PopStateEvent) => {
-      const state = event.state as HistoryState | null;
-      if (state?.view === 'index') return;
-      history.pushState({view: 'index'} satisfies HistoryState, '');
-      setView('index'); setLightbox(null);
-    };
-    addEventListener('popstate', ensureIndex, {once: true});
-    history.back();
-  }, []);
-  useEffect(() => {history.replaceState({view: 'home'} satisfies HistoryState, ''); const onPop = (event: PopStateEvent) => {const state = event.state as HistoryState | null; setView(state?.view || 'home'); setLightbox(state?.lightbox || null);}; addEventListener('popstate', onPop); return () => removeEventListener('popstate', onPop);}, []);
+  const viewRef = useRef<View>('home');
+  const closeRoom = useCallback(() => history.back(), []);
+  useEffect(() => {history.replaceState({view: 'home'} satisfies HistoryState, ''); const onPop = (event: PopStateEvent) => {const state = event.state as HistoryState | null; const next = state?.view || 'home'; const current = viewRef.current; if ((current === 'writing' || current === 'photography' || current === 'design') && next === 'home') {history.pushState({view: 'index'} satisfies HistoryState, ''); viewRef.current = 'index'; setView('index'); setLightbox(null); return;} viewRef.current = next; setView(next); setLightbox(state?.lightbox || null);}; addEventListener('popstate', onPop); return () => removeEventListener('popstate', onPop);}, []);
   useEffect(() => {const onKey = (event: KeyboardEvent) => {if (event.key !== 'Escape') return; if (lightbox || view === 'index') history.back(); else if (view !== 'home') closeRoom();}; addEventListener('keydown', onKey); return () => removeEventListener('keydown', onKey);}, [view, lightbox, closeRoom]);
   useEffect(() => {
     if (view !== 'index') return;
@@ -251,7 +243,7 @@ export default function Portfolio() {
     if (idleWindow.requestIdleCallback) {const id = idleWindow.requestIdleCallback(preload, {timeout: 600}); return () => idleWindow.cancelIdleCallback?.(id);}
     const timer = window.setTimeout(preload, 80); return () => window.clearTimeout(timer);
   }, [view]);
-  const go = (next: View) => {history.pushState({view: next} satisfies HistoryState, ''); setView(next); setLightbox(null);};
+  const go = (next: View) => {history.pushState({view: next} satisfies HistoryState, ''); viewRef.current = next; setView(next); setLightbox(null);};
   const open = (item: LightboxItem) => {history.pushState({view, lightbox: item} satisfies HistoryState, ''); setLightbox(item);};
   let room: ReactNode = null;
   if (view === 'writing') room = <main className="room-scene writing-scene"><SceneHeader room="WRITING" onClose={closeRoom}/><WritingRoom/></main>;
